@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Sushi Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1Wae9CzRjOBE4yjKZ-MlmhRbS4nMXV1Q&libraries=places"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body{font-family:'Poppins',sans-serif;scroll-behavior:smooth}
+        #map{height:300px;width:100%}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .animate-fade-in{animation:fadeIn .3s ease-out forwards}
+        input:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+    </style>
+</head>
+<body class="bg-gray-50">
+<header class="bg-gray-900 text-white py-6 shadow-lg">
+  <div class="container mx-auto px-4"><h1 class="text-3xl font-bold">Checkout</h1></div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row gap-8">
+    <!-- Carrito -->
+    <div class="lg:w-1/2">
+      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>Resumen del Pedido</h2>
+        <div id="cart-items" class="divide-y divide-gray-100"></div>
+        <div class="mt-4 pt-4 border-t flex justify-between font-semibold text-lg"><span>Total:</span><span id="cart-total">$0.00</span></div>
+      </div>
+
+      <!-- Info Entrega -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">Información de Entrega</h2>
+        <div class="mb-4">
+          <label class="block mb-2">Método de Entrega</label>
+          <div class="flex space-x-4">
+            <label class="inline-flex items-center"><input type="radio" name="deliveryMethod" value="pickup" checked class="form-radio text-indigo-600"><span class="ml-2">Recoger en tienda</span></label>
+            <label class="inline-flex items-center"><input type="radio" name="deliveryMethod" value="delivery" class="form-radio text-indigo-600"><span class="ml-2">Envío a domicilio</span></label>
+          </div>
+        </div>
+        <div id="delivery-details" class="hidden">
+          <div class="mb-4 flex justify-between"><span id="distance">0 km</span><span id="delivery-time">Tiempo estimado: 0 min</span></div>
+          <div class="flex justify-between"><span>Costo de envío</span><span id="delivery-cost">$20.00</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="lg:w-1/2">
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">Información del Cliente</h2>
+        <form id="checkout-form">
+          <div class="mb-4"><label class="block mb-2">Nombre completo</label><input type="text" id="name" required class="w-full px-4 py-2 border rounded-lg"></div>
+          <div class="mb-4"><label class="block mb-2">Teléfono</label><input type="tel" id="phone" required class="w-full px-4 py-2 border rounded-lg"></div>
+          <div id="address-fields" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div><label class="block mb-2">Calle y número*</label><input type="text" id="street" class="w-full px-4 py-2 border rounded-lg"></div>
+              <div><label class="block mb-2">Colonia*</label><input type="text" id="neighborhood" class="w-full px-4 py-2 border rounded-lg"></div>
+            </div>
+            <div><label class="block mb-2">Referencias</label><textarea id="references" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea></div>
+            <div><label class="block mb-2">Instrucciones de entrega</label><textarea id="delivery-instructions" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea></div>
+            <div class="mb-6"><label class="block mb-2">Selecciona tu ubicación exacta</label><div id="map" class="rounded-lg overflow-hidden shadow-md"></div><div class="mt-2 text-sm text-gray-600" id="coordinates">Lat: 0, Lng: 0</div></div>
+          </div>
+
+          <!-- Pago -->
+          <div class="mb-6">
+            <label class="block text-lg font-medium mb-2">Método de Pago</label>
+            <div class="space-y-2">
+              <label class="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg cursor-pointer">
+                <input type="radio" name="paymentMethod" value="cash" checked class="form-radio text-indigo-600 h-5 w-5">
+                <div><span class="font-medium">Efectivo al recibir</span><p class="text-sm text-gray-500">Paga cuando recibas tu pedido</p></div>
+              </label>
+              <label class="flex items-center space-x-3 bg-gray-50 p-4 rounded-lg cursor-pointer">
+                <input type="radio" name="paymentMethod" value="card" class="form-radio text-indigo-600 h-5 w-5">
+                <div><span class="font-medium">Tarjeta de crédito/débito</span><p class="text-sm text-gray-500">Pago seguro con tarjeta</p></div>
+              </label>
+            </div>
+            <div id="card-element" class="hidden mt-4 bg-gray-50 p-6 rounded-lg space-y-4">
+              <div><label class="block mb-2 font-medium">Datos de la tarjeta</label><div id="card-number" class="w-full px-4 py-3 border rounded-lg bg-white"></div></div>
+              <div class="grid grid-cols-2 gap-4">
+                <div><label class="block mb-2 font-medium">Expiración</label><div id="card-expiry" class="w-full px-4 py-3 border rounded-lg bg-white"></div></div>
+                <div><label class="block mb-2 font-medium">CVC</label><div id="card-cvc" class="w-full px-4 py-3 border rounded-lg bg-white"></div></div>
+              </div>
+            </div>
+            <div id="card-errors" role="alert" class="text-red-500 text-sm mt-2 hidden"></div>
+          </div>
+
+          <div class="mb-4"><label class="block mb-2">Notas adicionales</label><textarea id="notes" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea></div>
+
+          <button type="button" onclick="handleCheckout()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Confirmar Pedido</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ----- Variables Globales ----- */
+const restaurantLat=26.2034,restaurantLng=-98.23;
+let map,marker,userLat=0,userLng=0;
+let stripe,elements,cardNumber,cardExpiry,cardCvc;
+/* ----- Inicialización ----- */
+document.addEventListener('DOMContentLoaded',async()=>{
+  loadCartItems();
+  initMap();
+  setupDeliveryMethodToggle();
+  await setupStripe();
+  setupPaymentMethodToggle();
+});
+/* ----- Stripe ----- */
+async function setupStripe(){
+  stripe=Stripe('pk_test_51RqKTuPqcjfTLt03SA4p1A5Jrl9hJBvxpJ0DZrbZ2Y0s3XmOTX6lW2eexOkKkoGy03HJEZ207Efu8dDfqiXqwQLx005gV1z030');
+  elements=stripe.elements({locale:'es'});
+  const style={base:{color:'#32325d',fontFamily:'Poppins, sans-serif',fontSize:'16px','::placeholder':{color:'#aab7c4'}},invalid:{color:'#fa755a'}};
+  cardNumber=elements.create('cardNumber',{style});cardExpiry=elements.create('cardExpiry',{style});cardCvc=elements.create('cardCvc',{style});
+}
+/* ----- Toggle Stripe UI ----- */
+function setupPaymentMethodToggle(){
+  const radios=document.querySelectorAll('input[name="paymentMethod"]');
+  const cardEl=document.getElementById('card-element'),errEl=document.getElementById('card-errors');
+  radios.forEach(r=>r.addEventListener('change',()=>{
+    if(r.value==='card'){cardEl.classList.remove('hidden');errEl.classList.add('hidden');cardNumber.mount('#card-number');cardExpiry.mount('#card-expiry');cardCvc.mount('#card-cvc');}
+    else{cardEl.classList.add('hidden');errEl.classList.add('hidden');cardNumber.unmount();cardExpiry.unmount();cardCvc.unmount();}
+  }));
+}
+/* ----- Carrito ----- */
+function loadCartItems(){
+  const items=JSON.parse(localStorage.getItem('cart'))||[],container=document.getElementById('cart-items');let total=0;
+  container.innerHTML='';
+  if(!items.length){container.innerHTML='<p class="py-4 text-gray-500">No hay items en el carrito</p>';document.getElementById('cart-total').textContent='$0.00';return;}
+  items.forEach(it=>{
+    const sub=it.price*it.quantity;total+=sub;
+    container.insertAdjacentHTML('beforeend',`<div class="py-3 flex justify-between"><div><h3 class="font-medium">${it.name}</h3><p class="text-sm text-gray-500">${it.quantity} x $${it.price.toFixed(2)}</p></div><span class="font-medium">$${sub.toFixed(2)}</span></div>`);
+  });
+  document.getElementById('cart-total').textContent=`$${total.toFixed(2)}`;
+}
+/* ----- Google Maps ----- */
+function initMap(){
+  const def={lat:restaurantLat,lng:restaurantLng};
+  map=new google.maps.Map(document.getElementById('map'),{center:def,zoom:15,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
+  new google.maps.Marker({position:def,map,title:'Restaurante',icon:'https://maps.google.com/mapfiles/ms/icons/red-dot.png'});
+  marker=new google.maps.Marker({position:def,map,draggable:true,title:'Tu ubicación',icon:'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'});
+  marker.addListener('dragend',()=>updateUserLocation(marker.getPosition()));
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{const loc={lat:pos.coords.latitude,lng:pos.coords.longitude};map.setCenter(loc);marker.setPosition(loc);updateUserLocation(loc);},()=>updateUserLocation(def));
+  }else updateUserLocation(def);
+}
+function updateUserLocation(pos){
+  userLat=pos.lat??pos.lat();userLng=pos.lng??pos.lng();
+  document.getElementById('coordinates').textContent=`Lat: ${userLat.toFixed(4)}, Lng: ${userLng.toFixed(4)}`;
+  const dist=calcDistance(userLat,userLng,restaurantLat,restaurantLng);
+  if(document.querySelector('input[name="deliveryMethod"]:checked').value==='delivery')updateDeliveryInfo(dist);
+}
+function calcDistance(lat1,lon1,lat2,lon2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180,a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+/* ----- Entrega ----- */
+function setupDeliveryMethodToggle(){
+  const radios=document.querySelectorAll('input[name="deliveryMethod"]'),details=document.getElementById('delivery-details'),addr=document.getElementById('address-fields');
+  radios.forEach(r=>r.addEventListener('change',()=>{
+    if(r.value==='delivery'){details.classList.remove('hidden');addr.classList.remove('hidden');updateDeliveryInfo(calcDistance(userLat,userLng,restaurantLat,restaurantLng));}
+    else{details.classList.add('hidden');addr.classList.add('hidden');}
+  }));
+}
+function updateDeliveryInfo(dist){
+  const d=Math.round(dist*10)/10,time=Math.round(dist*3),cost=20+5*d;
+  document.getElementById('distance').textContent=`${d} km`;
+  document.getElementById('delivery-time').textContent=`Tiempo estimado: ${time} min`;
+  document.getElementById('delivery-cost').textContent=`$${cost.toFixed(2)}`;
+}
+/* ----- Checkout ----- */
+async function handleCheckout(){
+  const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim();
+  const street=document.getElementById('street').value.trim(),neigh=document.getElementById('neighborhood').value.trim(),refs=document.getElementById('references').value.trim();
+  const instr=document.getElementById('delivery-instructions').value.trim(),delivery=document.querySelector('input[name="deliveryMethod"]:checked').value;
+  const payMethod=document.querySelector('input[name="paymentMethod"]:checked').value,notes=document.getElementById('notes').value.trim(),errors=document.getElementById('card-errors');
+  if(!name||!phone){alert('Completa los campos requeridos');return;}
+  let address='Recoger en tienda';
+  if(delivery==='delivery'){if(!street||!neigh){alert('Completa la dirección');return;}address=`${street}, ${neigh}${refs?` (${refs})`:''}`;}
+  const order={customer:{name,phone,address},location:{lat:userLat,lng:userLng},delivery,paymentMethod:payMethod,notes,cart:JSON.parse(localStorage.getItem('cart'))||[],timestamp:new Date().toISOString()};
+  if(payMethod==='card'){
+    const {paymentMethod,error}=await stripe.createPaymentMethod({type:'card',card:cardNumber,billing_details:{name,phone,address:{line1:street,city:'',country:'MX'}}});
+    if(error){errors.textContent=error.message;errors.classList.remove('hidden');return;}
+    order.paymentMethodId=paymentMethod.id;
+    const res=await fetch('/create-payment-intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order)});
+    if(!res.ok){const msg=await res.text();alert(msg||'Error al procesar pago');return;}
+    const {clientSecret}=await res.json();
+    const {paymentIntent,error:err}=await stripe.confirmCardPayment(clientSecret,{payment_method:paymentMethod.id});
+    if(err){errors.textContent=err.message;errors.classList.remove('hidden');return;}
+  }
+  // Aquí enviarías 'order' a tu backend (p.e. '/submit-order') si lo deseas
+  showConfirmation();localStorage.removeItem('cart');
+}
+function showConfirmation(){
+  const html=`<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in"><div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center"><div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></div><h3 class="text-2xl font-bold mb-2">¡Pedido Confirmado!</h3><p class="mb-6">Gracias por tu compra. Hemos recibido tu pedido correctamente.</p><button onclick="this.closest('div').remove()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Cerrar</button></div></div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+</script>
+</body>
+</html>
