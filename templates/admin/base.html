@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} - Sushi Elegante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+    <style>
+        body{font-family:'Poppins',sans-serif;scroll-behavior:smooth}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .animate-fade-in{animation:fadeIn .3s ease-out forwards}
+        input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+        .loading { pointer-events: none; opacity: 0.6; }
+        .sushi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body class="bg-gray-50">
+<!-- Header común para todas las páginas de admin -->
+<header class="bg-gray-900 text-white py-6 shadow-lg">
+  <div class="container mx-auto px-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fas fa-fish text-2xl"></i>
+        <h1 class="text-2xl font-bold">Sushi Elegante - Admin</h1>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="/menu" class="text-indigo-300 hover:text-white transition duration-300">← Ver Menú</a>
+        <div class="flex items-center space-x-4">
+          <a href="/admin/dashboard" class="{% if request.endpoint == 'admin_dashboard' %}text-indigo-300{% else %}hover:text-gray-300{% endif %}">Dashboard</a>
+          <a href="/admin/productos" class="{% if request.endpoint == 'admin_productos' %}text-indigo-300{% else %}hover:text-gray-300{% endif %}">Productos</a>
+          <a href="/admin/pedidos" class="{% if request.endpoint == 'admin_pedidos' %}text-indigo-300{% else %}hover:text-gray-300{% endif %}">Pedidos</a>
+          <a href="/admin/configuracion" class="{% if request.endpoint == 'admin_configuracion' %}text-indigo-300{% else %}hover:text-gray-300{% endif %}">Config</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Contenido específico de cada página -->
+<main class="container mx-auto px-4 py-8">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- JavaScript común para todas las páginas -->
+<script>
+// ============================================================================
+// FUNCIONES COMUNES PARA TODAS LAS PÁGINAS DE ADMIN
+// ============================================================================
+
+function showSuccessMessage(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            ${message}
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showErrorMessage(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            ${message}
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Función para formatear fechas
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Función para formatear moneda
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount);
+}
+</script>
+
+<!-- JavaScript específico de cada página -->
+{% block extra_scripts %}{% endblock %}
+
+<!-- Font Awesome para iconos -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

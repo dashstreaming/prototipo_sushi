@@ -1,0 +1,552 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gestión de Productos{% endblock %}
+
+{% block content %}
+  <!-- Título -->
+  <div class="mb-8 text-center">
+    <h2 class="text-3xl font-medium text-gray-700 mb-2">Gestión de Productos</h2>
+    <p class="text-gray-600 font-light max-w-2xl mx-auto">Administra el menú de sushi y productos disponibles</p>
+  </div>
+
+  <!-- Filtros y Botón Agregar -->
+  <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row gap-4 items-end">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar producto</label>
+        <div class="relative">
+          <input type="text" id="search-input" placeholder="Buscar por nombre..." 
+                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+      <div class="md:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+        <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">Todos</option>
+          <option value="true">Disponible</option>
+          <option value="false">No disponible</option>
+        </select>
+      </div>
+      <button onclick="openProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition duration-300 font-medium whitespace-nowrap">
+        + Agregar Producto
+      </button>
+    </div>
+  </div>
+
+  <!-- Grid de Productos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="products-grid">
+    <!-- Los productos se cargarán dinámicamente -->
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex justify-center mt-8">
+    <nav class="flex items-center space-x-2">
+      <button class="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium">1</button>
+      <button class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300">2</button>
+      <button class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300">3</button>
+      <button class="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Modal de Producto -->
+  <div id="product-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-semibold text-gray-800" id="modal-title">Agregar Nuevo Producto</h3>
+          <button onclick="closeProductModal()" class="text-gray-500 hover:text-gray-700 transition duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form id="product-form" class="space-y-6">
+          <!-- Información Básica -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del producto *</label>
+              <input type="text" id="product-name" required 
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Precio *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500">$</span>
+                <input type="number" id="product-price" step="0.01" min="0" required 
+                       class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción *</label>
+            <textarea id="product-description" rows="3" required 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Describe los ingredientes y características del producto"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div></div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+              <div class="flex items-center space-x-4 mt-3">
+                <label class="inline-flex items-center">
+                  <input type="radio" name="product-status" value="true" checked 
+                         class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                  <span class="ml-2 text-sm text-gray-700">Disponible</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="radio" name="product-status" value="false" 
+                         class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                  <span class="ml-2 text-sm text-gray-700">No disponible</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Imagen del Producto -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Imagen del producto</label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition duration-300">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                    <span>Subir una imagen</span>
+                    <input type="file" class="sr-only" accept="image/*" onchange="previewImage(event)">
+                  </label>
+                  <p class="pl-1">o arrastrar y soltar</p>
+                </div>
+                <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
+              </div>
+            </div>
+            <div id="image-preview" class="mt-4 hidden">
+              <img class="w-full h-40 object-cover rounded-lg" alt="Preview">
+            </div>
+          </div>
+
+          <!-- Complementos -->
+          <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-medium text-gray-800 mb-4">Complementos del Producto</h3>
+            <p class="text-sm text-gray-600 mb-6">Configura los complementos que acompañan este producto en el menú</p>
+            
+            <div class="space-y-6">
+              <!-- Complementos obligatorios -->
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700">Complementos obligatorios</h4>
+                    <p class="text-xs text-gray-500">El cliente debe elegir uno (ej: tipo de salsa)</p>
+                  </div>
+                  <button type="button" onclick="addRequiredComplement()" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
+                    </svg>
+                    Agregar
+                  </button>
+                </div>
+                <div id="requiredComplementsContainer" class="space-y-2">
+                  <!-- Los complementos se agregarán dinámicamente aquí -->
+                </div>
+              </div>
+              
+              <!-- Complementos opcionales -->
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <div>
+                    <h4 class="text-sm font-medium text-gray-700">Complementos opcionales (+$)</h4>
+                    <p class="text-xs text-gray-500">El cliente puede agregar extras con costo adicional</p>
+                  </div>
+                  <button type="button" onclick="addOptionalComplement()" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
+                    </svg>
+                    Agregar
+                  </button>
+                </div>
+                <div id="optionalComplementsContainer" class="space-y-2">
+                  <!-- Los complementos se agregarán dinámicamente aquí -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex space-x-4 pt-6 border-t border-gray-200">
+            <button type="button" onclick="closeProductModal()" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg transition duration-300 font-medium">
+              Cancelar
+            </button>
+            <button type="submit" 
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg transition duration-300 font-medium">
+              <span id="submit-btn-text">Guardar Producto</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Variables globales
+let isEditMode = false;
+let editingProductId = null;
+let requiredComplementCount = 0;
+let optionalComplementCount = 0;
+
+// Inicializar página
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    setupFilters();
+});
+
+// Agregar complementos por defecto para nuevos productos
+function addDefaultComplements() {
+  // Agregar salsas por defecto (obligatorias)
+  const defaultRequiredComplements = ['Salsa de soja', 'Salsa teriyaki', 'Salsa picante'];
+  defaultRequiredComplements.forEach(complement => {
+    addRequiredComplement();
+    const containers = document.querySelectorAll('#requiredComplementsContainer > div');
+    const lastContainer = containers[containers.length - 1];
+    const input = lastContainer.querySelector('input[type="text"]');
+    if (input) input.value = complement;
+  });
+  
+  // Agregar extras por defecto (opcionales)
+  const defaultOptionalComplements = [
+    { name: 'Jengibre extra', price: 1.00 },
+    { name: 'Wasabi extra', price: 0.80 },
+    { name: 'Semillas de sésamo', price: 0.50 },
+    { name: 'Aguacate extra', price: 1.50 }
+  ];
+  
+  defaultOptionalComplements.forEach(complement => {
+    addOptionalComplement();
+    const containers = document.querySelectorAll('#optionalComplementsContainer > div');
+    const lastContainer = containers[containers.length - 1];
+    const nameInput = lastContainer.querySelector('input[type="text"]');
+    const priceInput = lastContainer.querySelector('input[type="number"]');
+    if (nameInput) nameInput.value = complement.name;
+    if (priceInput) priceInput.value = complement.price.toFixed(2);
+  });
+}
+
+// Funciones para complementos
+function addRequiredComplement() {
+  const container = document.getElementById('requiredComplementsContainer');
+  const div = document.createElement('div');
+  div.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+  div.innerHTML = `
+    <div class="flex items-center w-full">
+      <input type="text" placeholder="Nombre del complemento (ej: Salsa de soja)" 
+             class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+    </div>
+    <button type="button" onclick="this.parentNode.remove()" class="ml-3 text-red-500 hover:text-red-700 transition duration-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+      </svg>
+    </button>
+  `;
+  container.appendChild(div);
+}
+
+function addOptionalComplement() {
+  const container = document.getElementById('optionalComplementsContainer');
+  const div = document.createElement('div');
+  div.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+  div.innerHTML = `
+    <div class="flex items-center w-full space-x-3">
+      <input type="text" placeholder="Nombre del complemento (ej: Jengibre extra)" 
+             class="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <div class="flex items-center">
+        <span class="text-gray-500 text-sm mr-2">+$</span>
+        <input type="number" step="0.50" min="0" placeholder="0.00" 
+               class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-20 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+    </div>
+    <button type="button" onclick="this.parentNode.remove()" class="ml-3 text-red-500 hover:text-red-700 transition duration-300">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+      </svg>
+    </button>
+  `;
+  container.appendChild(div);
+}
+
+// Abrir modal
+function openProductModal(productId = null) {
+  isEditMode = productId !== null;
+  editingProductId = productId;
+  
+  const modal = document.getElementById('product-modal');
+  const title = document.getElementById('modal-title');
+  const submitBtnText = document.getElementById('submit-btn-text');
+  
+  if (isEditMode) {
+    title.textContent = 'Editar Producto';
+    submitBtnText.textContent = 'Actualizar Producto';
+    // Cargar datos del producto para edición
+    loadProductForEdit(productId);
+  } else {
+    title.textContent = 'Agregar Nuevo Producto';
+    submitBtnText.textContent = 'Guardar Producto';
+    document.getElementById('product-form').reset();
+    addDefaultComplements();
+  }
+  
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+}
+
+// Cerrar modal
+function closeProductModal() {
+  document.getElementById('product-modal').classList.add('hidden');
+  document.body.classList.remove('overflow-hidden');
+  document.getElementById('product-form').reset();
+  document.getElementById('image-preview').classList.add('hidden');
+  
+  // Limpiar complementos
+  document.getElementById('requiredComplementsContainer').innerHTML = '';
+  document.getElementById('optionalComplementsContainer').innerHTML = '';
+  requiredComplementCount = 0;
+  optionalComplementCount = 0;
+  
+  isEditMode = false;
+  editingProductId = null;
+}
+
+// Cargar productos
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        
+        if (data.success) {
+            renderProducts(data.products);
+        } else {
+            showErrorMessage('Error al cargar productos');
+        }
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        showErrorMessage('Error de conexión al cargar productos');
+    }
+}
+
+// Renderizar productos
+function renderProducts(products) {
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = '';
+    
+    if (!products || products.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-500">No hay productos disponibles</p></div>';
+        return;
+    }
+    
+    products.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'bg-white rounded-xl shadow-md overflow-hidden sushi-card transition duration-300';
+        productCard.innerHTML = `
+            <div class="relative">
+                <img src="${product.image_url || 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'}" 
+                     alt="${product.name}" class="w-full h-48 object-cover">
+                <span class="absolute top-3 right-3 ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} text-xs font-medium px-2 py-1 rounded-full">
+                    ${product.is_active ? 'Disponible' : 'No disponible'}
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800">${product.name}</h3>
+                    <span class="text-lg font-bold text-indigo-600">${formatCurrency(product.price)}</span>
+                </div>
+                <p class="text-gray-600 text-sm mb-3">${product.description}</p>
+                <div class="flex items-center justify-end mb-4">
+                    <span class="text-sm text-gray-500">ID: #${product.id.substring(0, 8)}</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="editProduct('${product.id}')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-lg transition duration-300 text-sm font-medium">
+                        Editar
+                    </button>
+                    <button onclick="toggleProductStatus('${product.id}', ${!product.is_active})" class="${product.is_active ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white px-3 py-2 rounded-lg transition duration-300 text-sm">
+                        ${product.is_active ? 
+                            '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/></svg>' : 
+                            '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'
+                        }
+                    </button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(productCard);
+    });
+}
+
+// Cargar producto para edición
+async function loadProductForEdit(productId) {
+    try {
+        const response = await fetch(`/api/products/${productId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const product = data.product;
+            
+            // Llenar formulario
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-description').value = product.description;
+            document.querySelector(`input[name="product-status"][value="${product.is_active}"]`).checked = true;
+            
+            // Cargar complementos si existen
+            // Aquí puedes agregar lógica para cargar complementos existentes
+        }
+    } catch (error) {
+        console.error('Error cargando producto para edición:', error);
+        showErrorMessage('Error al cargar datos del producto');
+    }
+}
+
+// Funciones de productos
+function editProduct(productId) {
+    openProductModal(productId);
+}
+
+async function toggleProductStatus(productId, newStatus) {
+    try {
+        const response = await fetch(`/api/admin/products/${productId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ isActive: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadProducts();
+            showSuccessMessage(result.message);
+        } else {
+            showErrorMessage(result.error);
+        }
+    } catch (error) {
+        console.error('Error cambiando estado:', error);
+        showErrorMessage('Error al cambiar estado del producto');
+    }
+}
+
+// Preview de imagen
+function previewImage(event) {
+    const input = event.target;
+    const preview = document.getElementById('image-preview');
+    const img = preview.querySelector('img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            preview.classList.remove('hidden');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Envío del formulario
+document.getElementById('product-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Recopilar complementos obligatorios
+    const requiredComplements = [];
+    document.querySelectorAll('#requiredComplementsContainer > div').forEach(div => {
+        const input = div.querySelector('input[type="text"]');
+        if (input && input.value.trim()) {
+            requiredComplements.push(input.value.trim());
+        }
+    });
+    
+    // Recopilar complementos opcionales
+    const optionalComplements = [];
+    document.querySelectorAll('#optionalComplementsContainer > div').forEach(div => {
+        const nameInput = div.querySelector('input[type="text"]');
+        const priceInput = div.querySelector('input[type="number"]');
+        if (nameInput && nameInput.value.trim() && priceInput && priceInput.value) {
+            optionalComplements.push({
+                name: nameInput.value.trim(),
+                price: parseFloat(priceInput.value)
+            });
+        }
+    });
+    
+    const formData = {
+        name: document.getElementById('product-name').value,
+        price: parseFloat(document.getElementById('product-price').value),
+        description: document.getElementById('product-description').value,
+        isActive: document.querySelector('input[name="product-status"]:checked').value === 'true',
+        requiredComplements: requiredComplements,
+        optionalComplements: optionalComplements
+    };
+    
+    try {
+        const url = isEditMode ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
+        const method = isEditMode ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            closeProductModal();
+            loadProducts();
+            showSuccessMessage(result.message || 'Producto guardado exitosamente');
+        } else {
+            showErrorMessage(result.error);
+        }
+    } catch (error) {
+        console.error('Error guardando producto:', error);
+        showErrorMessage('Error al guardar el producto');
+    }
+});
+
+// Configurar filtros
+function setupFilters() {
+    document.getElementById('search-input').addEventListener('input', function() {
+        // Implementar filtro de búsqueda
+        console.log('Buscar:', this.value);
+    });
+
+    document.getElementById('status-filter').addEventListener('change', function() {
+        // Implementar filtro por estado
+        console.log('Filtrar por estado:', this.value);
+    });
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('product-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeProductModal();
+    }
+});
+</script>
+{% endblock %}

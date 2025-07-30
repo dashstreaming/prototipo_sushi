@@ -1,0 +1,431 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block extra_styles %}
+.preview-image {
+    max-height: 150px;
+    object-fit: contain;
+}
+{% endblock %}
+
+{% block content %}
+  <!-- Título -->
+  <div class="mb-8 text-center">
+    <h2 class="text-3xl font-medium text-gray-700 mb-2">Configuración del Restaurante</h2>
+    <p class="text-gray-600 font-light max-w-2xl mx-auto">Administra la información básica y configuraciones de tu restaurante</p>
+  </div>
+
+  <form id="config-form" class="space-y-8">
+    <!-- Información del Restaurante -->
+    <div class="bg-white rounded-xl shadow-md p-6 sushi-card transition duration-300">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+        </svg>
+        Información del Restaurante
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del restaurante *</label>
+          <input type="text" id="restaurant-name" value="Sushi Elegante" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono de contacto *</label>
+          <input type="tel" id="restaurant-phone" value="+52 999 123 4567" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Dirección completa *</label>
+          <input type="text" id="restaurant-address" value="Calle 60 #123, Centro Histórico, Mérida, Yucatán" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Logo/Imagen del restaurante</label>
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 h-20 w-20 rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+              <img id="logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23D1D5DB' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h16v16H4V4zm2 2v12h12V6H6zm5 3h2v2h2v2h-2v2h-2v-2H9v-2h2V9zm-3 5h8v2H8v-2z'/%3E%3C/svg%3E" 
+                   alt="Logo" class="h-full w-full object-cover">
+            </div>
+            <div>
+              <input type="file" id="logo-input" accept="image/*" class="hidden" onchange="previewLogo(event)">
+              <button type="button" onclick="document.getElementById('logo-input').click()" 
+                      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300 text-sm font-medium">
+                Cambiar imagen
+              </button>
+              <p class="text-xs text-gray-500 mt-1">PNG, JPG hasta 5MB</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuración de Entregas -->
+    <div class="bg-white rounded-xl shadow-md p-6 sushi-card transition duration-300">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+        </svg>
+        Configuración de Entregas
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Costo base de envío ($) *</label>
+          <input type="number" id="base-delivery-cost" min="0" step="0.50" value="15.00" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Costo por kilómetro ($) *</label>
+          <input type="number" id="per-km-cost" min="0" step="0.25" value="5.00" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Radio máximo de entrega (km) *</label>
+          <input type="number" id="max-delivery-radius" min="1" step="0.5" value="10" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Envío gratis</h4>
+            <p class="text-xs text-gray-500">Activar envío gratis para pedidos que superen un monto mínimo</p>
+          </div>
+          <div class="relative inline-block w-12 mr-2 align-middle select-none">
+            <input type="checkbox" id="free-shipping-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"/>
+            <label for="free-shipping-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-all duration-300"></label>
+          </div>
+        </div>
+        <div id="free-shipping-amount" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Monto mínimo para envío gratis ($)</label>
+          <input type="number" id="free-shipping-min" min="0" step="1" value="100" 
+                 class="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tiempo de Preparación -->
+    <div class="bg-white rounded-xl shadow-md p-6 sushi-card transition duration-300">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+        </svg>
+        Tiempo de Preparación
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo base de preparación (minutos) *</label>
+          <input type="number" id="base-prep-time" min="5" step="5" value="20" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <p class="text-xs text-gray-500 mt-1">Tiempo estimado para preparar un pedido estándar</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo adicional por entrega (minutos)</label>
+          <input type="number" id="delivery-extra-time" min="0" step="5" value="15" 
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <p class="text-xs text-gray-500 mt-1">Tiempo extra que se suma a los pedidos con entrega a domicilio</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horario de Operación -->
+    <div class="bg-white rounded-xl shadow-md p-6 sushi-card transition duration-300">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+        </svg>
+        Horario de Operación
+      </h3>
+      <div class="space-y-4" id="business-hours-container">
+        <!-- Los horarios se generarán con JavaScript -->
+      </div>
+    </div>
+
+    <!-- Configuración de Notificaciones -->
+    <div class="bg-white rounded-xl shadow-md p-6 sushi-card transition duration-300">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+        </svg>
+        Configuración de Notificaciones
+      </h3>
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Notificaciones de nuevos pedidos</h4>
+            <p class="text-xs text-gray-500">Recibe notificaciones cuando lleguen nuevos pedidos</p>
+          </div>
+          <div class="relative inline-block w-12 mr-2 align-middle select-none">
+            <input type="checkbox" id="new-order-notifications" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"/>
+            <label for="new-order-notifications" class="toggle-label block overflow-hidden h-6 rounded-full bg-indigo-600 cursor-pointer transition-all duration-300"></label>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700">Sonido de notificación</h4>
+            <p class="text-xs text-gray-500">Reproduce un sonido cuando llegue un nuevo pedido</p>
+          </div>
+          <div class="relative inline-block w-12 mr-2 align-middle select-none">
+            <input type="checkbox" id="notification-sound" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"/>
+            <label for="notification-sound" class="toggle-label block overflow-hidden h-6 rounded-full bg-indigo-600 cursor-pointer transition-all duration-300"></label>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-200">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email para notificaciones</label>
+          <input type="email" id="notification-email" value="admin@sushielegante.com" 
+                 class="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <p class="text-xs text-gray-500 mt-1">Email donde se enviarán resúmenes de pedidos y reportes</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón Guardar -->
+    <div class="flex justify-end">
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition duration-300 font-medium flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+        Guardar Configuración
+      </button>
+    </div>
+  </form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Generar horarios de operación
+const days = [
+  { name: 'Lunes', id: 'monday', defaultOpen: '11:00', defaultClose: '22:00', isOpen: true },
+  { name: 'Martes', id: 'tuesday', defaultOpen: '11:00', defaultClose: '22:00', isOpen: true },
+  { name: 'Miércoles', id: 'wednesday', defaultOpen: '11:00', defaultClose: '22:00', isOpen: true },
+  { name: 'Jueves', id: 'thursday', defaultOpen: '11:00', defaultClose: '22:00', isOpen: true },
+  { name: 'Viernes', id: 'friday', defaultOpen: '11:00', defaultClose: '23:00', isOpen: true },
+  { name: 'Sábado', id: 'saturday', defaultOpen: '12:00', defaultClose: '23:00', isOpen: true },
+  { name: 'Domingo', id: 'sunday', defaultOpen: '12:00', defaultClose: '21:00', isOpen: false }
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    generateBusinessHours();
+    setupToggleEvents();
+    loadConfig();
+});
+
+function generateBusinessHours() {
+  const container = document.getElementById('business-hours-container');
+  
+  days.forEach(day => {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-3 border-b border-gray-100 last:border-b-0';
+    
+    dayElement.innerHTML = `
+      <div class="md:col-span-3 flex items-center">
+        <input type="checkbox" id="${day.id}-open" ${day.isOpen ? 'checked' : ''} 
+               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3">
+        <label for="${day.id}-open" class="block text-sm font-medium text-gray-700">${day.name}</label>
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs text-gray-500 mb-1">Apertura</label>
+        <input type="time" id="${day.id}-start" value="${day.defaultOpen}" 
+               ${!day.isOpen ? 'disabled' : ''}
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs text-gray-500 mb-1">Cierre</label>
+        <input type="time" id="${day.id}-end" value="${day.defaultClose}" 
+               ${!day.isOpen ? 'disabled' : ''}
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      <div class="md:col-span-3 text-sm flex items-center">
+        <span class="day-status ${day.isOpen ? 'text-green-600' : 'text-red-500'}">${day.isOpen ? 'Abierto' : 'Cerrado'}</span>
+      </div>
+    `;
+    
+    container.appendChild(dayElement);
+    
+    // Event listener para el checkbox
+    const checkbox = dayElement.querySelector(`#${day.id}-open`);
+    const startInput = dayElement.querySelector(`#${day.id}-start`);
+    const endInput = dayElement.querySelector(`#${day.id}-end`);
+    const statusSpan = dayElement.querySelector('.day-status');
+    
+    checkbox.addEventListener('change', function() {
+      startInput.disabled = !this.checked;
+      endInput.disabled = !this.checked;
+      statusSpan.textContent = this.checked ? 'Abierto' : 'Cerrado';
+      statusSpan.className = this.checked ? 'day-status text-green-600' : 'day-status text-red-500';
+    });
+  });
+}
+
+function setupToggleEvents() {
+    // Toggle para envío gratis
+    const freeShippingToggle = document.getElementById('free-shipping-toggle');
+    const freeShippingAmount = document.getElementById('free-shipping-amount');
+
+    freeShippingToggle.addEventListener('change', function() {
+        if (this.checked) {
+            freeShippingAmount.classList.remove('hidden');
+        } else {
+            freeShippingAmount.classList.add('hidden');
+        }
+    });
+}
+
+// Preview del logo
+function previewLogo(event) {
+    const input = event.target;
+    const preview = document.getElementById('logo-preview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('object-cover');
+            preview.classList.add('preview-image');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Cargar configuración existente
+async function loadConfig() {
+    try {
+        const response = await fetch('/api/admin/config');
+        const data = await response.json();
+        
+        if (data.success) {
+            const config = data.config;
+            
+            // Llenar formulario con datos existentes
+            document.getElementById('restaurant-name').value = config.restaurant.name || '';
+            document.getElementById('restaurant-phone').value = config.restaurant.phone || '';
+            document.getElementById('restaurant-address').value = config.restaurant.address || '';
+            
+            // Configuración de delivery
+            document.getElementById('base-delivery-cost').value = config.delivery.baseCost || 15;
+            document.getElementById('per-km-cost').value = config.delivery.costPerKm || 5;
+            document.getElementById('max-delivery-radius').value = config.delivery.maxRadius || 10;
+            
+            // Envío gratis
+            if (config.delivery.freeShipping) {
+                document.getElementById('free-shipping-toggle').checked = config.delivery.freeShipping.enabled || false;
+                document.getElementById('free-shipping-min').value = config.delivery.freeShipping.minAmount || 100;
+                
+                if (config.delivery.freeShipping.enabled) {
+                    document.getElementById('free-shipping-amount').classList.remove('hidden');
+                }
+            }
+            
+            // Tiempos de preparación
+            document.getElementById('base-prep-time').value = config.preparation.baseTime || 20;
+            document.getElementById('delivery-extra-time').value = config.preparation.deliveryExtraTime || 15;
+            
+            // Horarios de operación
+            if (config.businessHours) {
+                Object.keys(config.businessHours).forEach(day => {
+                    const dayConfig = config.businessHours[day];
+                    const checkbox = document.getElementById(`${day}-open`);
+                    const startInput = document.getElementById(`${day}-start`);
+                    const endInput = document.getElementById(`${day}-end`);
+                    const statusSpan = document.querySelector(`#${day}-open`).closest('.grid').querySelector('.day-status');
+                    
+                    if (checkbox && dayConfig) {
+                        checkbox.checked = dayConfig.isOpen;
+                        startInput.disabled = !dayConfig.isOpen;
+                        endInput.disabled = !dayConfig.isOpen;
+                        statusSpan.textContent = dayConfig.isOpen ? 'Abierto' : 'Cerrado';
+                        statusSpan.className = dayConfig.isOpen ? 'day-status text-green-600' : 'day-status text-red-500';
+                        
+                        if (dayConfig.isOpen && dayConfig.start && dayConfig.end) {
+                            startInput.value = dayConfig.start;
+                            endInput.value = dayConfig.end;
+                        }
+                    }
+                });
+            }
+            
+            // Notificaciones
+            if (config.notifications) {
+                document.getElementById('new-order-notifications').checked = config.notifications.newOrders || false;
+                document.getElementById('notification-sound').checked = config.notifications.sound || false;
+                document.getElementById('notification-email').value = config.notifications.email || '';
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando configuración:', error);
+        showErrorMessage('Error al cargar la configuración');
+    }
+}
+
+// Manejar envío del formulario
+document.getElementById('config-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Recopilar todos los datos del formulario
+    const configData = {
+        restaurant: {
+            name: document.getElementById('restaurant-name').value,
+            phone: document.getElementById('restaurant-phone').value,
+            address: document.getElementById('restaurant-address').value
+        },
+        delivery: {
+            baseCost: parseFloat(document.getElementById('base-delivery-cost').value),
+            costPerKm: parseFloat(document.getElementById('per-km-cost').value),
+            maxRadius: parseFloat(document.getElementById('max-delivery-radius').value),
+            freeShipping: {
+                enabled: document.getElementById('free-shipping-toggle').checked,
+                minAmount: parseFloat(document.getElementById('free-shipping-min').value) || 0
+            }
+        },
+        preparation: {
+            baseTime: parseInt(document.getElementById('base-prep-time').value),
+            deliveryExtraTime: parseInt(document.getElementById('delivery-extra-time').value)
+        },
+        businessHours: {},
+        notifications: {
+            newOrders: document.getElementById('new-order-notifications').checked,
+            sound: document.getElementById('notification-sound').checked,
+            email: document.getElementById('notification-email').value
+        }
+    };
+    
+    // Recopilar horarios de operación
+    days.forEach(day => {
+        const isOpen = document.getElementById(`${day.id}-open`).checked;
+        configData.businessHours[day.id] = {
+            isOpen,
+            start: isOpen ? document.getElementById(`${day.id}-start`).value : null,
+            end: isOpen ? document.getElementById(`${day.id}-end`).value : null
+        };
+    });
+    
+    try {
+        const response = await fetch('/api/admin/config', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(configData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(result.message);
+        } else {
+            showErrorMessage(result.error);
+        }
+    } catch (error) {
+        console.error('Error guardando configuración:', error);
+        showErrorMessage('Error al guardar la configuración');
+    }
+});
+</script>
+{% endblock %}

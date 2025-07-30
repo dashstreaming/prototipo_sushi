@@ -1,0 +1,506 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+  <!-- Título -->
+  <div class="mb-8 text-center">
+    <h2 class="text-3xl font-medium text-gray-700 mb-2">Gestión de Pedidos</h2>
+    <p class="text-gray-600 font-light max-w-2xl mx-auto">Administra y monitorea todos los pedidos del restaurante</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar pedido</label>
+        <div class="relative">
+          <input type="text" id="search-input" placeholder="Buscar por cliente, teléfono o #pedido" 
+                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+      <div class="md:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+        <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">Todos los estados</option>
+          <option value="pending">Nuevo</option>
+          <option value="sent">Enviado</option>
+          <option value="delivered">Entregado</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+      </div>
+      <div class="md:w-48">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de entrega</label>
+        <select id="delivery-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">Todos</option>
+          <option value="delivery">A domicilio</option>
+          <option value="pickup">Recoger en tienda</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid de pedidos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="orders-grid">
+    <!-- Los pedidos se cargarán dinámicamente -->
+  </div>
+
+  <!-- Paginación -->
+  <div class="flex justify-center mt-8">
+    <nav class="flex items-center space-x-2">
+      <button class="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium">1</button>
+      <button class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300">2</button>
+      <button class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300">3</button>
+      <button class="px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Modal de Detalles del Pedido -->
+  <div id="order-details-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-semibold text-gray-800">Detalles del Pedido #<span id="modal-order-number">SU1420</span></h3>
+          <button onclick="closeOrderDetails()" class="text-gray-500 hover:text-gray-700 transition duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Información del Cliente -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="text-lg font-medium text-gray-800 mb-3">Información del Cliente</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-600">Nombre</p>
+                <p class="font-medium text-gray-800" id="modal-customer-name">Juan Pérez</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">Teléfono</p>
+                <p class="font-medium text-gray-800" id="modal-customer-phone">+52 999 123 4567</p>
+              </div>
+              <div class="md:col-span-2">
+                <p class="text-sm text-gray-600">Dirección</p>
+                <div class="flex items-center space-x-2">
+                  <p class="font-medium text-gray-800 flex-1" id="modal-customer-address">Calle 45 #123, Col. Centro, Mérida, Yucatán</p>
+                  <button id="maps-btn" onclick="openGoogleMaps()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm transition duration-300 flex items-center space-x-1" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Maps</span>
+                  </button>
+                </div>
+                <div id="delivery-instructions" class="mt-2 hidden">
+                  <p class="text-sm text-gray-600">Instrucciones de entrega</p>
+                  <p class="text-sm text-gray-800" id="modal-delivery-instructions"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalles del Pedido -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h4 class="text-lg font-medium text-gray-800 mb-3">Detalles del Pedido</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p class="text-sm text-gray-600">Estado</p>
+                <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full" id="modal-status">Nuevo</span>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">Tipo de entrega</p>
+                <p class="font-medium text-gray-800" id="modal-delivery-type">Entrega a domicilio</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">Método de pago</p>
+                <p class="font-medium text-gray-800" id="modal-payment-method">Tarjeta de crédito</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Productos -->
+          <div>
+            <h4 class="text-lg font-medium text-gray-800 mb-3">Productos Pedidos</h4>
+            <div class="space-y-3" id="modal-products">
+              <!-- Los productos se cargarán dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Total -->
+          <div class="border-t border-gray-200 pt-4">
+            <div class="flex justify-between items-center text-lg font-semibold">
+              <span>Total:</span>
+              <span class="text-indigo-600" id="modal-total">$48.00</span>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="flex space-x-4 pt-4 border-t border-gray-200">
+            <button onclick="closeOrderDetails()" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg transition duration-300 font-medium">
+              Cerrar
+            </button>
+            <button id="modal-action-btn" onclick="markAsSent('SU1420')" 
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg transition duration-300 font-medium">
+              Marcar como Enviado
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Variables globales
+let currentOrders = [];
+let currentOrderInModal = null;
+
+// Cargar pedidos al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    setupFilters();
+    
+    // Actualizar pedidos cada 30 segundos
+    setInterval(loadOrders, 30000);
+});
+
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/admin/orders');
+        const data = await response.json();
+        
+        if (data.success) {
+            currentOrders = data.orders;
+            renderOrders(currentOrders);
+        } else {
+            showErrorMessage('Error al cargar pedidos');
+        }
+    } catch (error) {
+        console.error('Error cargando pedidos:', error);
+        showErrorMessage('Error de conexión al cargar pedidos');
+    }
+}
+
+function renderOrders(orders) {
+    const grid = document.getElementById('orders-grid');
+    grid.innerHTML = '';
+    
+    if (!orders || orders.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-500">No hay pedidos disponibles</p></div>';
+        return;
+    }
+    
+    orders.forEach(order => {
+        const orderCard = document.createElement('div');
+        orderCard.className = 'bg-white rounded-xl shadow-md overflow-hidden sushi-card transition duration-300';
+        
+        const statusConfig = getStatusConfig(order.status);
+        const deliveryIcon = order.delivery_method === 'delivery' ? 
+            '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/></svg>';
+        
+        const timeAgo = getTimeAgo(order.created_at);
+        const paymentIcon = order.payment_method === 'card' ? '💳 Pagado con tarjeta' : '💵 Pago en efectivo';
+        
+        orderCard.innerHTML = `
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">#${order.order_number}</h3>
+                        <p class="text-sm text-gray-500">${timeAgo}</p>
+                    </div>
+                    <span class="${statusConfig.class} text-xs font-medium px-3 py-1 rounded-full">${statusConfig.text}</span>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="font-medium text-gray-900">${order.customer_name}</p>
+                    <p class="text-sm text-gray-600">${order.customer_phone}</p>
+                    <div class="flex items-center mt-1">
+                        <span class="text-sm ${order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'}">${paymentIcon}</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center mb-4">
+                    ${deliveryIcon}
+                    <span class="text-gray-700 text-sm">${order.delivery_method === 'delivery' ? 'Entrega a domicilio' : 'Recoger en tienda'}</span>
+                </div>
+                
+                <div class="border-t border-gray-100 pt-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold text-gray-800">Total:</span>
+                        <span class="text-xl font-bold text-indigo-600">${formatCurrency(order.total)}</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="openOrderDetails('${order.id}')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition duration-300 text-sm font-medium">
+                        Ver Detalles
+                    </button>
+                    ${getActionButton(order)}
+                </div>
+            </div>
+        `;
+        
+        grid.appendChild(orderCard);
+    });
+}
+
+function getStatusConfig(status) {
+    const configs = {
+        'pending': { text: 'Nuevo', class: 'bg-yellow-100 text-yellow-800' },
+        'sent': { text: 'Enviado', class: 'bg-blue-100 text-blue-800' },
+        'delivered': { text: 'Entregado', class: 'bg-green-100 text-green-800' },
+        'cancelled': { text: 'Cancelado', class: 'bg-red-100 text-red-800' }
+    };
+    return configs[status] || configs.pending;
+}
+
+function getActionButton(order) {
+    if (order.status === 'pending') {
+        return `<button onclick="markAsSent('${order.id}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition duration-300 text-sm font-medium">Marcar Enviado</button>`;
+    } else if (order.status === 'sent') {
+        const whatsappBtn = order.delivery_method === 'delivery' ? 
+            `<button onclick="sendWhatsApp('${order.customer_phone.replace(/\D/g, '')}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition duration-300 text-sm mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.569-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
+                </svg>
+            </button>` : '';
+        return `${whatsappBtn}<button onclick="markAsDelivered('${order.id}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition duration-300 text-sm font-medium">Marcar Entregado</button>`;
+    }
+    return '';
+}
+
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return `Hace ${diff} segundos`;
+    if (diff < 3600) return `Hace ${Math.floor(diff / 60)} minutos`;
+    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} horas`;
+    return `Hace ${Math.floor(diff / 86400)} días`;
+}
+
+// Abrir modal de detalles
+async function openOrderDetails(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const order = data.order;
+            currentOrderInModal = order;
+            
+            // Llenar datos del modal
+            document.getElementById('modal-order-number').textContent = order.order_number;
+            document.getElementById('modal-customer-name').textContent = order.customer_name;
+            document.getElementById('modal-customer-phone').textContent = order.customer_phone;
+            document.getElementById('modal-customer-address').textContent = order.delivery_address || 'Recoger en tienda';
+            
+            // Mostrar/ocultar botón de Maps y instrucciones
+            const mapsBtn = document.getElementById('maps-btn');
+            const deliveryInstructions = document.getElementById('delivery-instructions');
+            const modalDeliveryInstructions = document.getElementById('modal-delivery-instructions');
+            
+            if (order.delivery_method === 'delivery' && order.delivery_latitude && order.delivery_longitude) {
+                mapsBtn.style.display = 'flex';
+                if (order.delivery_instructions) {
+                    deliveryInstructions.classList.remove('hidden');
+                    modalDeliveryInstructions.textContent = order.delivery_instructions;
+                } else {
+                    deliveryInstructions.classList.add('hidden');
+                }
+            } else {
+                mapsBtn.style.display = 'none';
+                deliveryInstructions.classList.add('hidden');
+            }
+            
+            // Estado
+            const statusConfig = getStatusConfig(order.status);
+            const statusEl = document.getElementById('modal-status');
+            statusEl.textContent = statusConfig.text;
+            statusEl.className = `${statusConfig.class} text-xs font-medium px-2 py-1 rounded-full`;
+            
+            document.getElementById('modal-delivery-type').textContent = order.delivery_method === 'delivery' ? 'Entrega a domicilio' : 'Recoger en tienda';
+            document.getElementById('modal-payment-method').textContent = order.payment_method === 'card' ? 'Tarjeta de crédito' : 'Pago en efectivo';
+            document.getElementById('modal-total').textContent = formatCurrency(order.total);
+            
+            // Productos
+            const productsContainer = document.getElementById('modal-products');
+            productsContainer.innerHTML = '';
+            
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    const productEl = document.createElement('div');
+                    productEl.className = 'flex justify-between items-center border-b border-gray-200 pb-2';
+                    
+                    const extras = item.order_item_extras && item.order_item_extras.length > 0 ? 
+                        `<p class="text-xs text-gray-500">Extras: ${item.order_item_extras.map(e => e.extra_name).join(', ')}</p>` : '';
+                    
+                    productEl.innerHTML = `
+                        <div>
+                            <p class="font-medium text-gray-800">${item.product_name}</p>
+                            <p class="text-sm text-gray-600">Cantidad: ${item.quantity}${item.sauce ? ` | Salsa: ${item.sauce}` : ''}</p>
+                            ${extras}
+                            ${item.notes ? `<p class="text-xs text-gray-500">Notas: ${item.notes}</p>` : ''}
+                        </div>
+                        <p class="font-semibold text-gray-800">${formatCurrency(item.subtotal)}</p>
+                    `;
+                    productsContainer.appendChild(productEl);
+                });
+            }
+            
+            // Botón de acción
+            const actionBtn = document.getElementById('modal-action-btn');
+            if (order.status === 'pending') {
+                actionBtn.textContent = 'Marcar como Enviado';
+                actionBtn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg transition duration-300 font-medium';
+                actionBtn.onclick = () => markAsSent(order.id);
+                actionBtn.style.display = 'block';
+            } else if (order.status === 'sent') {
+                actionBtn.textContent = 'Marcar como Entregado';
+                actionBtn.className = 'flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition duration-300 font-medium';
+                actionBtn.onclick = () => markAsDelivered(order.id);
+                actionBtn.style.display = 'block';
+            } else {
+                actionBtn.style.display = 'none';
+            }
+            
+            document.getElementById('order-details-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        } else {
+            showErrorMessage('Error al cargar detalles del pedido');
+        }
+    } catch (error) {
+        console.error('Error cargando detalles:', error);
+        showErrorMessage('Error al cargar detalles del pedido');
+    }
+}
+
+// Cerrar modal
+function closeOrderDetails() {
+    document.getElementById('order-details-modal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    currentOrderInModal = null;
+}
+
+// Abrir Google Maps con la ubicación del cliente
+function openGoogleMaps() {
+    if (!currentOrderInModal || !currentOrderInModal.delivery_latitude || !currentOrderInModal.delivery_longitude) {
+        showErrorMessage('No hay coordenadas disponibles para este pedido');
+        return;
+    }
+    
+    const { delivery_latitude: lat, delivery_longitude: lng } = currentOrderInModal;
+    const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}&z=17`;
+    window.open(googleMapsUrl, '_blank');
+}
+
+// Marcar como enviado
+async function markAsSent(orderId) {
+    await updateOrderStatus(orderId, 'sent');
+}
+
+// Marcar como entregado
+async function markAsDelivered(orderId) {
+    await updateOrderStatus(orderId, 'delivered');
+}
+
+// Actualizar estado de pedido
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(result.message);
+            loadOrders(); // Recargar lista
+            closeOrderDetails(); // Cerrar modal si está abierto
+        } else {
+            showErrorMessage(result.error);
+        }
+    } catch (error) {
+        console.error('Error actualizando pedido:', error);
+        showErrorMessage('Error al actualizar el pedido');
+    }
+}
+
+// Enviar WhatsApp
+function sendWhatsApp(phone) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const message = encodeURIComponent('🍣 ¡Hola! Tu pedido de Sushi Elegante salió para entrega. Tiempo estimado: 25-30 minutos según el tráfico. ¡Gracias por tu preferencia!');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+}
+
+// Configurar filtros
+function setupFilters() {
+    document.getElementById('search-input').addEventListener('input', function() {
+        filterOrders();
+    });
+
+    document.getElementById('status-filter').addEventListener('change', function() {
+        filterOrders();
+    });
+
+    document.getElementById('delivery-filter').addEventListener('change', function() {
+        filterOrders();
+    });
+}
+
+function filterOrders() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    const deliveryFilter = document.getElementById('delivery-filter').value;
+    
+    let filteredOrders = currentOrders;
+    
+    if (searchTerm) {
+        filteredOrders = filteredOrders.filter(order => 
+            order.customer_name.toLowerCase().includes(searchTerm) ||
+            order.customer_phone.includes(searchTerm) ||
+            order.order_number.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    if (statusFilter) {
+        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+    }
+    
+    if (deliveryFilter) {
+        filteredOrders = filteredOrders.filter(order => order.delivery_method === deliveryFilter);
+    }
+    
+    renderOrders(filteredOrders);
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('order-details-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeOrderDetails();
+    }
+});
+</script>
+{% endblock %}
